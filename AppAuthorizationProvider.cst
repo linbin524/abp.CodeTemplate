@@ -1,0 +1,86 @@
+﻿<%-- 
+Name:
+Author: 
+Description: 
+--%>
+<%@ Template Language="C#" TargetLanguage="Text" Src="" Inherits=""Debug="False" CompilerVersion="v4.0" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Property Name="SourceDatabase" DeepLoad="True" Type="SchemaExplorer.DatabaseSchema" %>
+<%@ Property Name="Tables" Type="TableSchemaCollection" Optional="True" Category="2.数据库" Description="Tables to Inclue" %>
+<%@ Template Language="C#" TargetLanguage="Text" %>
+<%@ Property Name="SampleStringProperty" Default="SomeValue" Type="System.String" %>
+<%@ Property Name="SampleBooleanProperty" Default="True" Type="System.Boolean" %>
+<%@ Property Name="RootNamespace" Type="String" Default="HashBlockChain" Optional="False" Category="1.名称空间" Description="系统名称空间的根名称." %>
+<%@ Property Name="Namespace" Type="String" Default="ZLDB_Domain" Optional="False" Category="1.名称空间" Description="系统当前所属文件夹的名称（命名空间相关）." %>
+My static content here.
+My dynamic content here: "<%= SampleStringProperty %>"
+Call a script method: <%= SampleMethod() %>
+<% if (SampleBooleanProperty) { %>
+My conditional content here.
+<% } %>
+<script runat="template">
+// My methods here.
+public string SampleMethod()
+{
+  return "Method output.";
+}
+
+</script>
+
+
+using System.Linq;
+using Abp.Authorization;
+using Abp.Localization;
+using <%=RootNamespace%>.Authorization;
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+//简介：Abp 权限配置，生成后要在 AbpZeroTemplateApplicationModule 中的Configuration.Authorization.Providers.Add<CustomsAppAuthorizationProvider>(); 确保注入
+//
+//
+//
+//
+//作者：
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+namespace <%= RootNamespace %>.<%=Namespace%>.Authorization
+{
+    /// <summary>
+    /// 权限配置都在这里。
+    /// 给权限默认设置服务
+    /// See <see cref="CustomsAppPermissions"/> for all permission names.
+    /// </summary>
+    public class CustomsAppAuthorizationProvider : AuthorizationProvider
+    {
+        public override void SetPermissions(IPermissionDefinitionContext context)
+        {
+            //在这里配置了自定义 的权限。
+
+            var pages = context.GetPermissionOrNull(AppPermissions.Pages) ?? context.CreatePermission(AppPermissions.Pages, L("Pages"));
+
+            var entityNameModel = pages.Children.FirstOrDefault(p => p.Name == AppPermissions.Pages_Administration)
+              ?? pages.CreateChildPermission(AppPermissions.Pages_Administration, L("Administration"));
+
+                 <% foreach(TableSchema t in Tables){ %>
+                 <%string tableName=t.Name.ToString(); %>
+                 <%string paramName=GetParamName(tableName); %>
+                 //<%=t.Description%> 权限
+                 var <%=paramName%> = entityNameModel.CreateChildPermission(CustomsAppPermissions.<%=t.Name %>, L("<%=t.Name %>"));
+                     <%=paramName%>.CreateChildPermission(CustomsAppPermissions.<%=t.Name %>_Create<%=t.Name %>, L("Create<%=t.Name %>"));
+                     <%=paramName%>.CreateChildPermission(CustomsAppPermissions.<%=t.Name %>_Edit<%=t.Name %>, L("Edit<%=t.Name %>"));
+                     <%=paramName%>.CreateChildPermission(CustomsAppPermissions.<%=t.Name %>_Delete<%=t.Name %>, L("Delete<%=t.Name %>"));
+
+                <% }%>
+
+        }
+
+        private static ILocalizableString L(string name)
+        {
+            return new LocalizableString(name, AbpZeroTemplateConsts.LocalizationSourceName);
+        }
+    }
+
+}
+
+<script runat="template">
+<!-- #include file="TemplateUtilities.cs" -->
+</script>

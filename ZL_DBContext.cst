@@ -1,0 +1,68 @@
+﻿<%-- 
+Name:
+Author: 
+Description: 
+--%>
+<%@ Template Language="C#" TargetLanguage="Text" Src="" Inherits=""Debug="False" CompilerVersion="v4.0" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Property Name="SourceDatabase" DeepLoad="True" Type="SchemaExplorer.DatabaseSchema" %>
+<%@ Property Name="Tables" Type="TableSchemaCollection" Optional="True" Category="2.数据库" Description="Tables to Inclue" %>
+<%@ Template Language="C#" TargetLanguage="Text" %>
+<%@ Property Name="SampleStringProperty" Default="SomeValue" Type="System.String" %>
+<%@ Property Name="SampleBooleanProperty" Default="True" Type="System.Boolean" %>
+<%@ Property Name="RootNamespace" Type="String" Default="Xmiot.Domain.Repository" Optional="False" Category="1.名称空间" Description="系统名称空间的根名称." %>
+My static content here.
+My dynamic content here: "<%= SampleStringProperty %>"
+Call a script method: <%= SampleMethod() %>
+<% if (SampleBooleanProperty) { %>
+My conditional content here.
+<% } %>
+<script runat="template">
+// My methods here.
+public string SampleMethod()
+{
+  return "Method output.";
+}
+
+</script>
+
+
+using System.Data.Common;
+using System.Data.Entity;
+using Abp.Zero.EntityFramework;
+using <%= RootNamespace %>.Authorization.Roles;
+using <%= RootNamespace %>.Authorization.Users;
+using <%= RootNamespace %>.Chat;
+using <%= RootNamespace %>.Friendships;
+using <%= RootNamespace %>.MultiTenancy;
+using <%= RootNamespace %>.Storage;
+//----------------------------------------------
+//简介：WebSite ORM EF DBContext数据库对应实体
+//
+//
+//
+//作者：
+//----------------------------------------------
+
+namespace <%= RootNamespace %>.EntityFramework
+{
+    public class AbpZeroTemplateDbContext : AbpZeroDbContext<Tenant, Role, User>
+    {
+
+        public AbpZeroTemplateDbContext(string conn)
+            : base(conn)
+        {
+
+        }
+
+
+        
+<% foreach(TableSchema t in Tables){ %>
+public virtual IDbSet<<%= t.Name[0].ToString().ToUpper() + t.Name.Remove(0,1)%>> <%=t.Name[0].ToString().ToUpper() + t.Name.Remove(0,1) %> { get; set; }
+<% }%>
+
+
+
+    }
+}

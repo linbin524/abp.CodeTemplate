@@ -1,0 +1,238 @@
+﻿<%@ Template Language="C#" TargetLanguage="Text" Src="" Inherits=""Debug="False" CompilerVersion="v4.0" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Property Name="SourceDatabase" DeepLoad="True" Type="SchemaExplorer.DatabaseSchema" %>
+<%@ Property Name="Tables" Type="TableSchemaCollection" Optional="True" Category="2.数据库" Description="Tables to Inclue" %>
+<%-- 注册实体层Entity模板 --%>
+<%@ Register Name="DomainEntityTemplate" Template="DomainEntity.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="ControllerTemplate" Template="Controller.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="AppManagerTemplate" Template="AppManager.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="IRepositoryTemplate" Template="IRepository.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="RepositoryTemplate" Template="Repository.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="MappingTemplate" Template="Mapping.cst" MergeProperties="Flase" ExcludeProperties=""%>
+
+<%@ Register Name="DtoTemplate" Template="Dto.cst" MergeProperties="Flase" ExcludeProperties=""%>
+
+<%@ Register Name="ExcelExporterTemplate" Template="ExcelExporter.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="IExcelExporterTemplate" Template="IExcelExporter.cst" MergeProperties="Flase" ExcludeProperties=""%>
+
+
+<%@ Register Name="IndexTemplate" Template="View\Index.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="IndexJsTemplate" Template="View\IndexJs.cst" MergeProperties="Flase" ExcludeProperties=""%>
+
+<%@ Register Name="CreateOrEditModalTemplate" Template="View\createOrEditModal.cst" MergeProperties="Flase" ExcludeProperties=""%>
+<%@ Register Name="CreateOrEditModalJsTemplate" Template="View\createOrEditModalJs.cst" MergeProperties="Flase" ExcludeProperties=""%>
+
+
+
+<script runat="template">
+//解决方案输出路径
+private string AppDirectory = String.Empty;
+[Editor(typeof(System.Windows.Forms.Design.FolderNameEditor), typeof(System.Drawing.Design.UITypeEditor))] 
+[Optional, NotChecked]
+[DefaultValue("")]
+public string OutputDirectory 
+{ 
+get
+{
+return AppDirectory;
+}
+set
+{
+if (value.EndsWith("\\")) value = value.Substring(0, value.Length -1);
+AppDirectory = value;
+} 
+}
+</script>
+<script runat="template">
+<!-- #include file="TemplateUtilities.cs" -->
+
+//生成实体DomainEntity类
+private void GenerateDomainEntityClasses()
+{
+   string ZLDB_DomainDirectory = OutputDirectory +"\\Core\\ZLDB_Domain\\";
+     SafeCreateDirectory(ZLDB_DomainDirectory);
+   
+    DomainEntityTemplate Template =new DomainEntityTemplate();
+    foreach(TableSchema table in this.Tables)
+    {        
+          string FileDirectory = ZLDB_DomainDirectory +table.Name+"DbEntity\\";
+          SafeCreateDirectory(FileDirectory);
+        Template.SourceTable = table;
+          string tempName = table.Name[0].ToString().ToUpper() + table.Name.Remove(0,1);
+        Template.RenderToFile(FileDirectory+  tempName +".cs", true);
+        Debug.WriteLine(FileDirectory + tempName +".cs" +" 创建成功.");
+    }
+}
+
+//生成View模板 暂时不适用
+private void GenerateViewClasses()
+{
+   string FileDirectory = OutputDirectory +"\\Views\\";
+    SafeCreateDirectory(FileDirectory);
+    IndexTemplate Template =new IndexTemplate();
+   IndexJsTemplate indexJsTemplate=new IndexJsTemplate();
+   CreateOrEditModalTemplate createOrEditModalTp=new CreateOrEditModalTemplate();
+   CreateOrEditModalJsTemplate createOrEditModalJsTp=new CreateOrEditModalJsTemplate();
+    
+    foreach(TableSchema table in this.Tables)
+    { 
+        string TFileDirectory=FileDirectory+"\\"+table.Name+"\\";
+        Template.SourceTable = table;
+        Template.RenderToFile(TFileDirectory +"Index.cshtml", true);
+        Debug.WriteLine(TFileDirectory +"Index.cshtml" +" 创建成功.");
+        
+        string FFileDirectory=FileDirectory+"\\"+table.Name+"\\";
+        indexJsTemplate.SourceTable = table;
+        indexJsTemplate.RenderToFile(FFileDirectory+"Index.js", true);
+        Debug.WriteLine(FFileDirectory+"Index.js" +" 创建成功.");  
+        
+        //编辑列表 视图
+        string createOrEditModalTpFileDirectory=FileDirectory+"\\"+table.Name+"\\";
+        createOrEditModalTp.SourceTable = table;
+        createOrEditModalTp.RenderToFile(createOrEditModalTpFileDirectory+"createOrEditModal.cshtml", true);
+        Debug.WriteLine(createOrEditModalTpFileDirectory+"createOrEditModal.cshtml" +" 创建成功.");  
+        
+        //编辑列表 脚本
+        string createOrEditModalJsTpFileDirectory=FileDirectory+"\\"+table.Name+"\\";
+        createOrEditModalJsTp.SourceTable = table;
+        createOrEditModalJsTp.RenderToFile(createOrEditModalJsTpFileDirectory+"createOrEditModal.js", true);
+        Debug.WriteLine(createOrEditModalJsTpFileDirectory+"createOrEditModal.js" +" 创建成功.");  
+        
+     
+    }
+    
+    
+}
+
+//生成Controller类 暂时不适用
+private void GenerateControllerClasses()
+{
+   string FileDirectory = OutputDirectory +"\\Controllers\\";
+    SafeCreateDirectory(FileDirectory);
+    ControllerTemplate Template =new ControllerTemplate();
+    foreach(TableSchema table in this.Tables)
+    {        
+        Template.SourceTable = table;
+        Template.RenderToFile(FileDirectory + table.Name +"Controller.cs", true);
+        Debug.WriteLine(FileDirectory + table.Name +"Controller.cs" +" 创建成功.");
+    }
+}
+
+//生成Repository类
+private void GenerateRepositoryClasses()
+{
+  
+    string AppDirectory = OutputDirectory +"\\Application\\ZL_App\\";
+    SafeCreateDirectory(AppDirectory);
+    IRepositoryTemplate aTemplate = new IRepositoryTemplate();
+    foreach(TableSchema table in this.Tables)
+    {        
+         string FileDirectory = AppDirectory+"\\"+table.Name+"\\";
+          SafeCreateDirectory(FileDirectory);
+        aTemplate.SourceTable = table;
+        aTemplate.RenderToFile(FileDirectory + "I" + table.Name +"AppService.cs", true);
+        Debug.WriteLine(FileDirectory + "I" + table.Name +"AppService.cs" +" 创建成功.");
+    }
+  
+    RepositoryTemplate bTemplate = new RepositoryTemplate();
+    foreach(TableSchema table in this.Tables)
+    {   
+         string FileDirectory = AppDirectory+"\\"+table.Name+"\\";
+          SafeCreateDirectory(FileDirectory);
+        bTemplate.SourceTable = table;
+        bTemplate.RenderToFile(FileDirectory + table.Name +"AppService.cs", true);
+        Debug.WriteLine(FileDirectory + table.Name +"AppService.cs" +" 创建成功.");
+    }
+    
+}
+
+//生成实体Dto类
+private void GenerateDtoClasses()
+{
+  
+    string AppDirectory = OutputDirectory +"\\Application\\ZL_App\\";
+    SafeCreateDirectory(AppDirectory);
+    DtoTemplate aTemplate = new DtoTemplate();
+    foreach(TableSchema table in this.Tables)
+    {        
+         string FileDirectory = AppDirectory+"\\"+table.Name+"\\Dto\\";
+          SafeCreateDirectory(FileDirectory);
+        aTemplate.SourceTable = table;
+        aTemplate.RenderToFile(FileDirectory + table.Name +"Dto.cs", true);
+        Debug.WriteLine(FileDirectory + table.Name +"Dto.cs" +" 创建成功.");
+    }
+  
+}
+
+//生成导出Excel类
+private void GenerateExportingClasses()
+{
+  
+    string AppDirectory = OutputDirectory +"\\Application\\ZL_App\\";
+    SafeCreateDirectory(AppDirectory);
+    ExcelExporterTemplate aTemplate = new ExcelExporterTemplate();
+    IExcelExporterTemplate bTemplate = new IExcelExporterTemplate();
+    foreach(TableSchema table in this.Tables)
+    {        
+         string FileDirectory = AppDirectory+"\\"+table.Name+"\\Exporting\\";
+          SafeCreateDirectory(FileDirectory);
+        aTemplate.SourceTable = table;
+        bTemplate.SourceTable = table;
+        aTemplate.RenderToFile(FileDirectory + table.Name +"ListExcelExporter.cs", true);
+        Debug.WriteLine(FileDirectory + table.Name +"ListExcelExporter.cs" +" 创建成功.");
+        bTemplate.RenderToFile(FileDirectory +"I"+ table.Name +"ListExcelExporter.cs", true);
+        Debug.WriteLine(FileDirectory +"I"+ table.Name +"ListExcelExporter.cs" +" 创建成功.");
+    }
+  
+}
+
+
+//生成core 的领域层AppManager
+private void GenerateAppClasses()
+{
+    string ZLDB_DomainDirectory = OutputDirectory +"\\Core\\ZLDB_Domain\\";
+     SafeCreateDirectory(ZLDB_DomainDirectory);
+  
+    AppManagerTemplate aTemplate = new AppManagerTemplate();
+    foreach(TableSchema table in this.Tables)
+    {        
+         string FileDirectory = ZLDB_DomainDirectory +table.Name+"DbEntity\\";
+          SafeCreateDirectory(FileDirectory);
+        aTemplate.SourceTable = table;
+        aTemplate.RenderToFile(FileDirectory + table.Name +"Manager.cs", true);
+        Debug.WriteLine(FileDirectory + table.Name +"Manager.cs" +" 创建成功.");
+    }
+
+}
+
+//生成Map
+private void GenerateMappingClasses()
+{
+     string AppDirectory = OutputDirectory +"\\Application\\ZL_App\\";
+    SafeCreateDirectory(AppDirectory);
+  
+    MappingTemplate aTemplate = new MappingTemplate();
+    foreach(TableSchema table in this.Tables)
+    {        
+        string FileDirectory = AppDirectory+"\\"+table.Name+"\\Mappers\\";
+        SafeCreateDirectory(FileDirectory);
+        aTemplate.SourceTable = table;
+        aTemplate.RenderToFile(FileDirectory + table.Name +"Mapper.cs", true);
+        Debug.WriteLine(FileDirectory + table.Name +"Mapper.cs" +" 创建成功.");
+    }
+
+}
+</script>
+<%
+//创建实体层Entity类
+this.GenerateDomainEntityClasses();
+this.GenerateViewClasses();
+this.GenerateControllerClasses();
+this.GenerateRepositoryClasses();
+this.GenerateAppClasses();
+this.GenerateMappingClasses();
+this.GenerateDtoClasses();
+this.GenerateExportingClasses();
+Debug.WriteLine("OK");
+%>

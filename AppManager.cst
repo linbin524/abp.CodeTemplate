@@ -1,0 +1,54 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" ResponseEncoding="UTF-8" Description="Generates a single entity business class." Debug="True" %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="2.数据库" Description="Database table that this entity should be based on." %>
+<%@ Property Name="TablePrefixes" Type="String" Default="" Optional="True" Category="2.数据库" Description="The table prefix to be cut from the class name" %>
+<%@ Property Name="RootNamespace" Type="String" Default="HashBlockChain" Optional="False" Category="1.名称空间" Description="系统名称空间的根名称." %>
+<%@ Property Name="Namespace" Type="String" Default="ZLDB_Domain" Optional="False" Category="1.名称空间" Description="系统名称空间的Model名称." %>
+<%@ Property Name="PrefixLength" Type="Int32" Default="0" Optional="False" Category="2.数据库" Description="数据表前缀截取长度." %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="CodeSmith.BaseTemplates" %>
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Data" %>
+<%string tableName=SourceTable.Name.ToString(); %>
+<%string tableClass=GetClassName(SourceTable, "", 0); %>
+<%string paramName=GetParamName(tableName); %>
+using Abp.Domain.Repositories;
+using Abp.Domain.Services;
+using System;
+
+namespace <%= RootNamespace %>.<%= Namespace %>
+{
+    public class <%=tableName%>Manager : IDomainService
+    {
+        <% foreach (ColumnSchema column in SourceTable.Columns) { %>            
+         <% if (column.IsPrimaryKeyMember) {  %>
+         
+          <%string tempType = GetCSharpVariableType(column); %>
+    
+        private readonly IRepository<<%=tableName%>,<%=tempType%>> _<%=paramName%>Repository;
+        
+         /// <summary>
+        /// 构造方法
+        /// </summary>
+        public <%=tableName%>Manager(IRepository<<%=tableName%>,<%=tempType%>> <%=paramName%>Repository)
+        {
+            _<%=paramName%>Repository = <%=paramName%>Repository;
+        }
+        
+        //TODO:编写领域业务代码
+        
+        /// <summary>
+        ///初始化
+        /// </summary>
+        private void Init()
+        {
+
+        }
+        
+        <%} %>
+        <%} %>
+    }
+}
+<script runat="template">
+<!-- #include file="TemplateUtilities.cs" -->
+</script>

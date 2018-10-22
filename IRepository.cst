@@ -1,0 +1,120 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" ResponseEncoding="UTF-8" Description="Generates a single entity business class." Debug="True" %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="2.数据库" Description="Database table that this entity should be based on." %>
+<%@ Property Name="TablePrefixes" Type="String" Default="" Optional="True" Category="2.数据库" Description="The table prefix to be cut from the class name" %>
+<%@ Property Name="RootNamespace" Type="String" Default="HashBlockChain" Optional="False" Category="1.名称空间" Description="系统名称空间的根名称." %>
+<%@ Property Name="Namespace" Type="String" Default="ZLDB_Domain" Optional="False" Category="1.名称空间" Description="系统当前所属文件夹的名称（命名空间相关）." %>
+<%@ Property Name="FolderNamespace" Type="String" Default="" Optional="true" Category="1.名称空间" Description="系统名称空间的Model名称." %>
+<%@ Property Name="PrefixLength" Type="Int32" Default="0" Optional="False" Category="2.数据库" Description="数据表前缀截取长度." %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="CodeSmith.BaseTemplates" %>
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Data" %>
+<%string tableClass=GetClassName(SourceTable, "", 0); %>
+<% FolderNamespace=SourceTable.Name.ToString();%>
+<%string tableName=GetParamName(FolderNamespace); %>
+using Abp.Application.Services;
+using Abp.Application.Services.Dto;
+using <%= RootNamespace %>.Dto;
+using <%= RootNamespace %>.<%=Namespace%>.Dtos;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace <%= RootNamespace %>.<%=Namespace%>
+{
+
+
+
+    /// <summary>
+    /// <%=SourceTable.Description%> 业务接口（）
+    /// </summary>
+      public interface I<%=tableClass%>AppService : IApplicationService
+    {
+        
+        /// <summary>
+        /// 获取所有数据列表
+        /// </summary>
+        /// <returns>返回数据集合</returns>
+        Task<List<<%=tableClass%>Dto>> GetAllList();
+
+        /// <summary>
+        /// 获取分页数据列表 分页具体代码需要适当修改，如orderby 需要匹配 创建时间 或者其他数据Id（int）
+        /// </summary>
+        /// <returns>返回数据集合</returns>
+        Task<PagedResultDto<<%=tableClass%>Dto>> GetPagedListAsync(PagedAndFilteredInputDto input);
+        
+        /// <summary>
+        /// 获取指定条件的数据列表  webapi 无法使用
+        /// </summary>
+        /// <returns>返回数据集合</returns>
+        Task<List<<%=tableClass%>Dto>> GetListByCodition(Expression<Func<<%=tableClass%>, bool>> predicate);
+
+        /// <summary>
+        /// excel 导出
+        /// </summary>
+        /// <returns></returns>
+        //Task<FileDto> Get<<%=tableClass%>>ToExcel();
+
+
+  <% foreach (ColumnSchema column in SourceTable.Columns) { %>            
+         <% if (column.IsPrimaryKeyMember) {  %>
+         
+          <%string tempType = GetCSharpVariableType(column); %>
+        /// <summary>
+        /// 根据指定id 获取数据实体
+        /// </summary>
+        /// <param name="input">当前id</param>
+        /// <returns></returns>
+        Task<<%=tableClass%>Dto> Get<%=tableClass%>ForEditAsync(NullableIdDto<<%=tempType%>> input);
+        
+                /// <summary>
+        /// 根据Id创建或编辑操作
+        /// </summary>
+        /// <param name="input">实体</param>
+        /// <returns></returns>
+        Task CreateOrUpdate<%=tableClass%>Async(<%=tableClass%>Dto input);
+
+
+        /// <summary>
+        /// 新增 
+        /// </summary>
+        /// <param name="input">新增实体</param>
+        /// <returns>新增状态</returns>
+        Task<<%=tempType%>> Create(<%=tableClass%>Dto input);
+
+        /// <summary>
+        /// 修改
+        /// </summary>
+        /// <param name="input">修改实体</param>
+        /// <returns>修改状态</returns>
+        Task<<%=tableClass%>Dto> Update(<%=tableClass%>Dto input);
+        
+        /// <summary>
+        /// 删除
+        /// </summary>
+        /// <param name="input">删除Dto</param>
+        /// <returns>无返回值</returns>
+        System.Threading.Tasks.Task Delete(EntityDto<string> input);
+        
+        /// <summary>
+        /// 删除   webapi 无法使用
+        /// </summary>
+        /// <param name="key">主键Key</param>
+        /// <returns>是否删除成功</returns>
+        System.Threading.Tasks.Task DeleteByCondition(Expression<Func<<%=tableClass%>, bool>> predicate);
+         
+      <%  }%> <%  }%>
+       
+
+
+    }
+    
+}
+
+<script runat="template">
+<!-- #include file="TemplateUtilities.cs" -->
+</script>

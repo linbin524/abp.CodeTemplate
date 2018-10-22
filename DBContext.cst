@@ -1,0 +1,69 @@
+﻿<%-- 
+Name:
+Author: 
+Description: 
+--%>
+<%@ Template Language="C#" TargetLanguage="Text" Src="" Inherits=""Debug="False" CompilerVersion="v4.0" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Property Name="SourceDatabase" DeepLoad="True" Type="SchemaExplorer.DatabaseSchema" %>
+<%@ Property Name="Tables" Type="TableSchemaCollection" Optional="True" Category="2.数据库" Description="Tables to Inclue" %>
+<%@ Template Language="C#" TargetLanguage="Text" %>
+<%@ Property Name="SampleStringProperty" Default="SomeValue" Type="System.String" %>
+<%@ Property Name="SampleBooleanProperty" Default="True" Type="System.Boolean" %>
+My static content here.
+My dynamic content here: "<%= SampleStringProperty %>"
+Call a script method: <%= SampleMethod() %>
+<% if (SampleBooleanProperty) { %>
+My conditional content here.
+<% } %>
+<script runat="template">
+// My methods here.
+public string SampleMethod()
+{
+  return "Method output.";
+}
+
+</script>
+
+
+using AOP.Model;
+using System;
+using System.Collections.Generic;
+using System.Data.Entity;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+//----------------------------------------------
+//简介：WebSite ORM EF WebSiteContext数据库对应实体
+//
+//
+//
+//作者：林滨
+//----------------------------------------------
+
+namespace AOP.DBData
+{
+    public class WebSiteContext : BaseDBContext
+    {
+
+        public WebSiteContext(string conn)
+            : base(conn)
+        {
+
+        }
+
+
+        
+<% foreach(TableSchema t in Tables){ %>
+
+
+
+public DbSet<<%=t.Name %>> <%=t.Name %> { get; set; }
+
+<% }%>
+
+
+
+    }
+}

@@ -1,0 +1,46 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" ResponseEncoding="UTF-8" Description="Generates a single entity business class." Debug="True" %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="2.数据库" Description="Database table that this entity should be based on." %>
+<%@ Property Name="TablePrefixes" Type="String" Default="" Optional="True" Category="2.数据库" Description="The table prefix to be cut from the class name" %>
+
+<%@ Property Name="RootNamespace" Type="String" Default="HashBlockChain" Optional="False" Category="1.名称空间" Description="系统名称空间的根名称." %>
+<%@ Property Name="Namespace" Type="String" Default="ZLDB_Domain" Optional="False" Category="1.名称空间" Description="系统名称空间的Model名称." %>
+
+
+<%@ Property Name="PrefixLength" Type="Int32" Default="0" Optional="False" Category="2.数据库" Description="数据表前缀截取长度." %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="CodeSmith.BaseTemplates" %>
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Data" %>
+<%string tableClass=GetClassName(SourceTable, "", 0); %>
+<% Namespace=SourceTable.Name.ToString();%>
+<%string tableName=SourceTable.Name.ToString(); %>
+<%string paramName=GetParamName(tableName); %>
+
+
+using <%=RootNamespace%>.Web.Controllers;
+using <%=RootNamespace%>.<%=Namespace%>;
+
+using System.Web.Mvc;
+
+namespace <%=RootNamespace%>.Web.Areas.Mpa.Controllers
+{
+    public class <%=tableName%>Controller : AbpZeroTemplateControllerBase
+    {
+        private readonly I<%=tableName%>AppService _<%=paramName%>AppService;
+        public <%=tableName%>Controller(I<%=tableName%>AppService <%=paramName%>AppService)
+        {
+            _<%=paramName%>AppService = <%=paramName%>AppService;
+        }
+
+        // GET: Mpa/Test
+        public ActionResult Index()
+        {
+            return View();
+        }
+    }
+}
+
+<script runat="template">
+<!-- #include file="TemplateUtilities.cs" -->
+</script>

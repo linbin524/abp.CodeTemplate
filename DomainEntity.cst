@@ -1,0 +1,100 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" ResponseEncoding="UTF-8" Description="Generates a single entity business class." Debug="True" %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="2.数据库" Description="Database table that this entity should be based on." %>
+<%@ Property Name="TablePrefixes" Type="String" Default="" Optional="True" Category="2.数据库" Description="The table prefix to be cut from the class name" %>
+
+<%@ Property Name="RootNamespace" Type="String" Default="HashBlockChain" Optional="False" Category="1.名称空间" Description="系统名称空间的根名称." %>
+<%@ Property Name="Namespace" Type="String" Default="ZLDB_Domain" Optional="False" Category="1.名称空间" Description="系统名称空间的Model名称." %>
+<%@ Property Name="PrefixLength" Type="Int32" Default="0" Optional="False" Category="2.数据库" Description="数据表前缀截取长度." %>
+
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="CodeSmith.BaseTemplates" %>
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Data" %>
+<%string tableClass=GetClassName(SourceTable, "", 0); %>
+<%string tableName=SourceTable.Name.ToString(); %>
+using System;
+using Abp.Authorization.Users;
+using Abp.Extensions;
+using Microsoft.AspNet.Identity;
+using System.ComponentModel.DataAnnotations.Schema;
+using Abp.Domain.Entities;
+using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
+using <%= RootNamespace %>.Ext;
+using Abp;
+//----------------------------------------------
+//简介：<%= RootNamespace %>.<%= Namespace %>  Entity 数据库对应实体
+//
+//
+//
+//auther：
+//----------------------------------------------
+namespace <%= RootNamespace %>.<%= Namespace %>
+{
+
+   
+<%--    public partial class <%=tableName%> :Entity<Guid>
+    {      
+        #region 自定义属性，即由数据实体扩展的实体                
+         <% foreach (ColumnSchema column in SourceTable.Columns) { %>
+            <% if (column.IsForeignKeyMember) {%>
+            <% string foreignClass = GetForeignClass(column.Name); %>
+            [NotMapped]
+            public string <%=foreignClass%>_Name { get{  return _<%=foreignClass%> != null?_<%=foreignClass%>.name:"";}}     
+            [ForeignKey("<%= column.Name %>")]            
+            public virtual <%=foreignClass%> _<%=foreignClass%> { set; get; }<%="\n\r" %>
+            <%}%>        
+        <% } %>
+        #endregion
+    }--%>
+    <% foreach (ColumnSchema column in SourceTable.Columns) { %>            
+         <% if (column.IsPrimaryKeyMember) {  %>
+         
+          <%string tempType = GetCSharpVariableType(column); %>
+         
+      <%  }%> <%  }%>
+ <%--    <%=tempType%>--%>
+    <%-- <%=SourceTable.PrimaryKey.MemberColumns %>--%>//获取主键Id的命名
+     <% foreach (ColumnSchema column in SourceTable.Columns) { %>            
+         <% if (column.IsPrimaryKeyMember) {  %>
+         
+          <%string pkType = GetCSharpVariableType(column); %>
+          
+          ///<%=SourceTable.Description%> 
+           [Table("<%=tableName%>")]
+           public partial class <%=tableName%> :Entity<<%=pkType%>>
+           {
+                <% if (pkType=="Guid") {  %>
+               public <%=tableName%>() {
+                  Id = SequentialGuidGenerator.Instance.Create();
+               }
+            <%  }%><%  }%>  <%  }%>
+        #region Declarations
+        <% foreach (ColumnSchema column in SourceTable.Columns) { %>            
+         <% if (column.IsPrimaryKeyMember) {  continue; %>
+         
+         <%  }else{%>
+         <%string vt = GetCSharpVariableType(column); %>  
+         
+         /// <summary>
+        /// <%=column.Description %>
+        /// </summary>
+          <% if (vt=="string") {%>
+          [DisplayName("<%=column.Description %>")]
+          [StringLength(<%=column.Size %>)]
+            <%  } %>
+             <% if (vt=="decimal"||vt=="decimal?") {%>
+          [DecimalPrecision(<%=column.Precision %>, <%=column.Scale %>)]  
+            <%  } %>
+            
+         public virtual <%= vt %> <%= column.Name %>{ get; set; }<%="\n\r" %> 
+         <%  } %>
+        <% } %>
+        #endregion
+    }
+}
+<script runat="template">
+<!-- #include file="TemplateUtilities.cs" -->
+</script>

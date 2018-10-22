@@ -1,0 +1,59 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" ResponseEncoding="UTF-8" Description="Generates a single entity business class." Debug="True" %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="2.数据库" Description="Database table that this entity should be based on." %>
+<%@ Property Name="TablePrefixes" Type="String" Default="" Optional="True" Category="2.数据库" Description="The table prefix to be cut from the class name" %>
+<%@ Property Name="RootNamespace" Type="String" Default="HashBlockChain" Optional="False" Category="1.名称空间" Description="系统名称空间的根名称." %>
+<%@ Property Name="Namespace" Type="String" Default="ZLDB_Domain" Optional="False" Category="1.名称空间" Description="系统名称空间的Model名称." %>
+<%@ Property Name="PrefixLength" Type="Int32" Default="0" Optional="False" Category="2.数据库" Description="数据表前缀截取长度." %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="CodeSmith.BaseTemplates" %>
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Data" %>
+<%string tableName=SourceTable.Name.ToString(); %>
+<%string tableClass=GetClassName(SourceTable, "", 0); %>
+
+using AutoMapper;
+using <%= RootNamespace %>.<%= Namespace %>;
+
+namespace <%= RootNamespace %>.<%= Namespace %>.Mappers
+{
+    public class <%=tableName%>DtoMapper 
+    {
+      private static volatile bool _mappedBefore;
+      private static readonly object SyncObj = new object();
+        /// <summary>
+        /// 初始化映射
+        /// </summary>
+        public void CreateMappings(IMapperConfigurationExpression configuration)
+        {
+        
+		  lock (SyncObj)
+            {
+                if (_mappedBefore)
+                {
+                    return;
+                }
+
+                CreateMappingsInternal(configuration);
+                _mappedBefore = true;
+            }
+
+        }
+              
+        /// <summary>
+        ///Configuration.Modules.AbpAutoMapper().Configurators.Add(<%=tableName%>DtoMapper.CreateMappings);
+        ///注入位置< see cref = "AbpZeroTemplateApplicationModule" /> 
+        /// <param name="configuration"></param>
+        /// </summary>       
+        private static void CreateMappingsInternal(IMapperConfigurationExpression configuration)
+        {
+            //默认ABP功能已经实现了，如果你要单独对DTO进行拓展，可以在此处放开注释文件。
+            //Configuration.Modules.AbpAutoMapper().Configurators.Add(<%=tableName%>Mapper.CreateMappings);
+            //Mapper.CreateMap<<%=tableName%>, <%=tableName%>Dto>();
+        }
+    }
+}
+
+<script runat="template">
+<!-- #include file="TemplateUtilities.cs" -->
+</script>

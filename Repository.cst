@@ -1,0 +1,394 @@
+﻿<%@ CodeTemplate Language="C#" TargetLanguage="C#" ResponseEncoding="UTF-8" Description="Generates a single entity business class." Debug="True" %>
+<%@ Property Name="SourceTable" Type="SchemaExplorer.TableSchema" Category="2.数据库" Description="Database table that this entity should be based on." %>
+<%@ Property Name="TablePrefixes" Type="String" Default="" Optional="True" Category="2.数据库" Description="The table prefix to be cut from the class name" %>
+<%@ Property Name="RootNamespace" Type="String" Default="HashBlockChain" Optional="False" Category="1.名称空间" Description="系统名称空间的根名称." %>
+<%@ Property Name="Namespace" Type="String" Default="ZLDB_Domain" Optional="False" Category="1.名称空间" Description="系统当前所属文件夹的名称（命名空间相关）." %>
+<%@ Property Name="FolderNamespace" Type="String" Default="" Optional="true" Category="1.名称空间" Description="系统名称空间的Model名称." %>
+<%@ Property Name="PrefixLength" Type="Int32" Default="0" Optional="False" Category="2.数据库" Description="数据表前缀截取长度." %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Assembly Name="CodeSmith.BaseTemplates" %>
+<%@ Assembly Name="System.Data" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Import Namespace="System.Data" %>
+<%string tableClass=GetClassName(SourceTable, "", 0); %>
+<% FolderNamespace=SourceTable.Name.ToString();%>
+<%string tableName=SourceTable.Name.ToString(); %>
+<%string paramName=GetParamName(tableName); %>
+
+using Abp.Application.Services;
+using Abp.Application.Services.Dto;
+using Abp.AutoMapper;
+using Abp.Domain.Repositories;
+using Abp.Domain.Uow;
+using AutoMapper;
+using System;
+using System.Collections.Generic;
+using System.Data.Entity;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
+using System.Linq.Dynamic;
+using Abp.Linq.Extensions;
+using <%= RootNamespace %>.<%=Namespace%>.Dtos;
+using <%= RootNamespace %>.Dto;
+using <%= RootNamespace %>.Authorization.<%=tableName%>.Exporting;
+namespace <%= RootNamespace %>.<%=Namespace%>
+{
+
+ <% foreach (ColumnSchema column in SourceTable.Columns) { %>            
+         <% if (column.IsPrimaryKeyMember) {  %>
+         
+          <%string tempType = GetCSharpVariableType(column); %>
+         
+          <% if (tempType=="Guid") {  %>
+    /// <summary>
+    /// <%=SourceTable.Description%> 业务实现接口
+    /// </summary>
+    public class <%=tableName%>AppService : AbpZeroTemplateAppServiceBase, I<%=tableName%>AppService
+    {
+        private readonly IRepository<<%=tableName%>, Guid> _<%=paramName%>Repository;
+        private readonly I<%=tableName%>ListExcelExporter _i<%=tableName%>ListExcelExporter;
+
+        /// <summary>
+        /// 构造函数自动注入我们所需要的类或接口
+        /// </summary>
+        public <%=tableName%>AppService(IRepository<<%=tableName%>, Guid> <%=paramName%>Repository,I<%=tableName%>ListExcelExporter i<%=tableName%>ListExcelExporter)
+        {
+            _<%=paramName%>Repository = <%=paramName%>Repository;
+            _i<%=tableName%>ListExcelExporter = i<%=tableName%>ListExcelExporter;
+         
+        }
+
+        /// <summary>
+        /// 获取所有数据列表
+        /// </summary>
+        /// <returns>返回数据集合</returns>
+        public async Task<List<<%=tableName%>Dto>> GetAllList()
+        {
+            //调用Task仓储的特定方法GetAllWithPeople
+            var resultList = await _<%=paramName%>Repository.GetAllListAsync();
+            return Mapper.Map<List<<%=tableName%>Dto>>(resultList).ToList();
+        }
+        
+        /// <summary>
+        /// 获取分页数据列表 分页具体代码需要适当修改，如orderby 需要匹配 创建时间 或者其他数据Id（int）
+        /// </summary>
+        /// <returns>返回数据集合</returns>
+        public async Task<PagedResultDto<<%=tableName%>Dto>> GetPagedListAsync(PagedAndFilteredInputDto input)
+        {
+            var query = _<%=paramName%>Repository.GetAll();
+            //TODO:根据传入的参数添加过滤条件
+
+            var resultCount = await query.CountAsync();
+            var result<%=paramName%> = await query
+            .OrderBy(x=>x.Id)
+            .PageBy(input)
+            .ToListAsync();
+
+            var resultListDtos = result<%=paramName%>.MapTo<List<<%=tableName%>Dto>>();
+            
+            if (!string.IsNullOrEmpty(input.Sorting)) {
+                resultListDtos = resultListDtos.OrderBy(input.Sorting).ToList();
+            }
+            
+            return new PagedResultDto<<%=tableName%>Dto>(
+            resultCount,
+            resultListDtos
+            );
+        }
+
+         /// <summary>
+        /// 获取指定条件的数据列表  webapi 无法使用
+        /// </summary>
+        /// <returns>返回数据集合</returns>
+        public async Task<List<<%=tableName%>Dto>> GetListByCodition(Expression<Func<<%=tableName%>, bool>> predicate)
+        {
+
+            var resultList = await _<%=paramName%>Repository.GetAllListAsync(predicate);
+            return Mapper.Map<List<<%=tableName%>Dto>>(resultList).ToList();
+        }
+
+
+         /// <summary>
+        /// 导出excel 具体方法
+        /// </summary>
+        /// <returns>excel文件</returns>
+       /// public async Task<FileDto> Get<%=tableName%>ToExcel()
+        ///{
+        ///    var resultList = await _<%=paramName%>Repository.GetAllListAsync();
+        ///   var <%=paramName%>Dtos= Mapper.Map<List<<%=tableName%>Dto>>(resultList).ToList();
+        ///   return _i<%=tableName%>ListExcelExporter.ExportToFile(<%=paramName%>Dtos);
+       /// }
+
+        /// <summary>
+        /// 根据指定id 获取数据实体
+        /// </summary>
+        /// <param name="input">当前id</param>
+        /// <returns></returns>
+        public async Task<<%=tableName%>Dto> Get<%=tableName%>ForEditAsync(NullableIdDto<System.Guid> input)
+        {
+            var output = new <%=tableName%>Dto();
+
+           <%=tableName%>Dto <%=paramName%>EditDto;
+
+            if (input.Id.HasValue)
+            {
+                var entity = await _<%=paramName%>Repository.GetAsync(input.Id.Value);
+                <%=paramName%>EditDto = entity.MapTo<<%=tableName%>Dto>();
+            }
+            else
+            {
+                <%=paramName%>EditDto = new <%=tableName%>Dto();
+            }
+
+            output = <%=paramName%>EditDto;
+            return output;
+        }
+
+        /// <summary>
+        /// 根据Id创建或编辑操作
+        /// </summary>
+        /// <param name="input">实体</param>
+        /// <returns></returns>
+        public async Task CreateOrUpdate<%=tableName%>Async(<%=tableName%>Dto input)
+        {
+            if (!string.IsNullOrWhiteSpace(input.Id))
+            {
+                await Update(input);
+            }
+            else
+            {
+                await Create(input);
+            }
+        }
+
+        /// <summary>
+        /// 新增 
+        /// </summary>
+        /// <param name="input">新增参数</param>
+        /// <returns>新增实体</returns>
+        public async Task<Guid> Create(<%=tableName%>Dto input)
+        {
+            input.Id = new <%=tableName%>().Id.ToString(); 
+            var resultObj = input.MapTo<<%=tableName%>>();
+            var result = await _<%=paramName%>Repository.InsertAsync(resultObj);
+
+            return result.Id;
+        }
+
+        /// <summary>
+        /// 修改
+        /// </summary>
+        /// <param name="input">修改参数</param>
+        /// <returns>修改实体</returns>
+        public async Task<<%=tableName%>Dto> Update(<%=tableName%>Dto input)
+        {
+            <%=tableName%> obj = await _<%=paramName%>Repository.GetAsync(new Guid(input.Id));
+            input.MapTo(obj);
+            var result = await _<%=paramName%>Repository.UpdateAsync(obj);
+            return obj.MapTo<<%=tableName%>Dto>();
+        }
+
+        /// <summary>
+        /// 删除
+        /// </summary>
+        /// <param name="input">删除Dto</param>
+        /// <returns>无返回值</returns>
+        public async System.Threading.Tasks.Task Delete(EntityDto<string> input)
+        {
+            await _<%=paramName%>Repository.DeleteAsync(new Guid(input.Id));
+        }
+
+        /// <summary>
+        /// 删除 webapi 无法使用
+        /// </summary>
+        /// <param name="predicate">删除条件</param>
+        /// <returns>无返回值</returns>
+        public async System.Threading.Tasks.Task DeleteByCondition(Expression<Func<<%=tableName%>, bool>> predicate)
+        {
+            await _<%=paramName%>Repository.DeleteAsync(predicate);
+          
+        }
+    }
+
+
+            <%  } else {%>
+              /// <summary>
+    /// <%=SourceTable.Description%> 业务实现接口
+    /// </summary>
+    public class <%=tableName%>AppService : AbpZeroTemplateAppServiceBase, I<%=tableName%>AppService
+    {
+        private readonly IRepository<<%=tableName%>, <%=tempType%>> _<%=paramName%>Repository;
+        private readonly I<%=tableName%>ListExcelExporter _i<%=tableName%>ListExcelExporter;
+
+        /// <summary>
+        /// 构造函数自动注入我们所需要的类或接口
+        /// </summary>
+        public <%=tableName%>AppService(IRepository<<%=tableName%>,  <%=tempType%>> <%=paramName%>Repository,I<%=tableName%>ListExcelExporter i<%=tableName%>ListExcelExporter)
+        {
+            _<%=paramName%>Repository = <%=paramName%>Repository;
+            _i<%=tableName%>ListExcelExporter = i<%=tableName%>ListExcelExporter;
+         
+        }
+
+        /// <summary>
+        /// 获取所有数据列表
+        /// </summary>
+        /// <returns>返回数据集合</returns>
+        public async Task<List<<%=tableName%>Dto>> GetAllList()
+        {
+            //调用Task仓储的特定方法GetAllWithPeople
+            var resultList = await _<%=paramName%>Repository.GetAllListAsync();
+            return Mapper.Map<List<<%=tableName%>Dto>>(resultList).ToList();
+        }
+        
+        /// <summary>
+        /// 获取分页数据列表 分页具体代码需要适当修改，如orderby 需要匹配 创建时间 或者其他数据Id（int）
+        /// </summary>
+        /// <returns>返回数据集合</returns>
+        public async Task<PagedResultDto<<%=tableName%>Dto>> GetPagedListAsync(PagedAndFilteredInputDto input)
+        {
+            var query = _<%=paramName%>Repository.GetAll();
+            //TODO:根据传入的参数添加过滤条件
+
+            var resultCount = await query.CountAsync();
+            var result<%=paramName%> = await query
+            .OrderBy(x=>x.Id)
+            .PageBy(input)
+            .ToListAsync();
+
+            var resultListDtos = result<%=paramName%>.MapTo<List<<%=tableName%>Dto>>();
+            return new PagedResultDto<<%=tableName%>Dto>(
+            resultCount,
+            resultListDtos
+            );
+        }
+
+         /// <summary>
+        /// 获取指定条件的数据列表  webapi 无法使用
+        /// </summary>
+        /// <returns>返回数据集合</returns>
+        public async Task<List<<%=tableName%>Dto>> GetListByCodition(Expression<Func<<%=tableName%>, bool>> predicate)
+        {
+
+            var resultList = await _<%=paramName%>Repository.GetAllListAsync(predicate);
+            return Mapper.Map<List<<%=tableName%>Dto>>(resultList).ToList();
+        }
+
+
+         /// <summary>
+        /// 导出excel 具体方法
+        /// </summary>
+        /// <returns>excel文件</returns>
+       /// public async Task<FileDto> Get<%=tableName%>ToExcel()
+        ///{
+        ///    var resultList = await _<%=paramName%>Repository.GetAllListAsync();
+        ///   var <%=paramName%>Dtos= Mapper.Map<List<<%=tableName%>Dto>>(resultList).ToList();
+        ///   return _i<%=tableName%>ListExcelExporter.ExportToFile(<%=paramName%>Dtos);
+       /// }
+
+        /// <summary>
+        /// 根据指定id 获取数据实体
+        /// </summary>
+        /// <param name="input">当前id</param>
+        /// <returns></returns>
+        public async Task<<%=tableName%>Dto> Get<%=tableName%>ForEditAsync(NullableIdDto<<%=tempType%>> input)
+        {
+            var output = new <%=tableName%>Dto();
+
+           <%=tableName%>Dto <%=paramName%>EditDto;
+
+            if (Convert.ToInt32(input.Id)>0)
+            {
+                var entity = await _<%=paramName%>Repository.GetAsync(Convert.ToInt32(input.Id));
+                <%=paramName%>EditDto = entity.MapTo<<%=tableName%>Dto>();
+            }
+            else
+            {
+                <%=paramName%>EditDto = new <%=tableName%>Dto();
+            }
+
+            output = <%=paramName%>EditDto;
+            return output;
+        }
+
+        /// <summary>
+        /// 根据Id创建或编辑操作
+        /// </summary>
+        /// <param name="input">实体</param>
+        /// <returns></returns>
+        public async Task CreateOrUpdate<%=tableName%>Async(<%=tableName%>Dto input)
+        {
+            if (Convert.ToInt32(input.Id)>0)
+            {
+                await Update(input);
+            }
+            else
+            {
+                await Create(input);
+            }
+        }
+
+        /// <summary>
+        /// 新增 
+        /// </summary>
+        /// <param name="input">新增参数</param>
+        /// <returns>新增实体</returns>
+        public async Task<<%=tempType%>> Create(<%=tableName%>Dto input)
+        {
+            input.Id = new <%=tableName%>().Id.ToString(); 
+            var resultObj = input.MapTo<<%=tableName%>>();
+            var result = await _<%=paramName%>Repository.InsertAsync(resultObj);
+
+            return result.Id;
+        }
+
+        /// <summary>
+        /// 修改
+        /// </summary>
+        /// <param name="input">修改参数</param>
+        /// <returns>修改实体</returns>
+        public async Task<<%=tableName%>Dto> Update(<%=tableName%>Dto input)
+        {
+            <%=tableName%> obj = await _<%=paramName%>Repository.GetAsync(Convert.ToInt32(input.Id));
+            input.MapTo(obj);
+            var result = await _<%=paramName%>Repository.UpdateAsync(obj);
+            return obj.MapTo<<%=tableName%>Dto>();
+        }
+
+        /// <summary>
+        /// 删除
+        /// </summary>
+        /// <param name="input">删除Dto</param>
+        /// <returns>无返回值</returns>
+        public async System.Threading.Tasks.Task Delete(EntityDto<string> input)
+        {
+            await _<%=paramName%>Repository.DeleteAsync(Convert.ToInt32(input.Id));
+        }
+
+        /// <summary>
+        /// 删除 webapi 无法使用
+        /// </summary>
+        /// <param name="predicate">删除条件</param>
+        /// <returns>无返回值</returns>
+        public async System.Threading.Tasks.Task DeleteByCondition(Expression<Func<<%=tableName%>, bool>> predicate)
+        {
+            await _<%=paramName%>Repository.DeleteAsync(predicate);
+          
+        }
+    }
+
+
+            <%  }%> 
+      <%  }%> <%  }%>
+
+   
+}
+
+
+ 
+
+<script runat="template">
+<!-- #include file="TemplateUtilities.cs" -->
+</script>

@@ -1,0 +1,84 @@
+﻿<%-- 
+Name:
+Author: 
+Description: 
+--%>
+<%@ Template Language="C#" TargetLanguage="Text" Src="" Inherits=""Debug="False" CompilerVersion="v4.0" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Property Name="SourceDatabase" DeepLoad="True" Type="SchemaExplorer.DatabaseSchema" %>
+<%@ Property Name="Tables" Type="TableSchemaCollection" Optional="True" Category="2.数据库" Description="Tables to Inclue" %>
+<%@ Template Language="C#" TargetLanguage="Text" %>
+<%@ Property Name="SampleStringProperty" Default="SomeValue" Type="System.String" %>
+<%@ Property Name="SampleBooleanProperty" Default="True" Type="System.Boolean" %>
+<%@ Property Name="RootNamespace" Type="String" Default="HashBlockChain" Optional="False" Category="1.名称空间" Description="系统名称空间的根名称." %>
+<%@ Property Name="Namespace" Type="String" Default="ZLDB_Domain" Optional="False" Category="1.名称空间" Description="系统当前所属文件夹的名称（命名空间相关）." %>
+My static content here.
+My dynamic content here: "<%= SampleStringProperty %>"
+Call a script method: <%= SampleMethod() %>
+<% if (SampleBooleanProperty) { %>
+My conditional content here.
+<% } %>
+<script runat="template">
+// My methods here.
+public string SampleMethod()
+{
+  return "Method output.";
+}
+
+</script>
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+//简介：Abp 权限配置，生成后要在 AbpZeroTemplateApplicationModule 中的Configuration.Authorization.Providers.Add<CustomsAppAuthorizationProvider>(); 确保注入
+//
+//
+//
+//
+//作者：
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+namespace <%= RootNamespace %>.<%=Namespace%>.Authorization
+{
+        /// <summary>
+        /// 定义系统的权限名称的字符串常量。
+        /// <see cref="CustomsAppAuthorizationProvider"/>中对权限的定义.
+        /// </summary>
+        public static class CustomsAppPermissions
+        {
+        
+            //配置权限模块初始化
+        //TODO:★需要到请将以下内容剪切到AbpZeroTemplateApplicationModule
+        //   Configuration.Authorization.Providers.Add<CustomsAppAuthorizationProvider>();
+
+        //TODO:★请将以下内容剪切到CORE类库的Localization/Source/AbpZeroTemplatezh-cn.xml
+        //第一次加载建议复制他
+        // <text name="MustBe_Required" value="不能为空" />
+        
+          <!-- 管理 多语言 英文 -->
+              <% foreach(TableSchema t in Tables){ %>
+                 <%string tableName=t.Name.ToString();  %>
+                 <%string paramName=GetParamName(tableName); %>
+                <%string description=GetTableDescriptionName(t.Description); %>
+                
+         <!--<%=description%> 开始-->
+            <text name="<%=tableName%>" value="<%=tableName%>" />
+            <text name="<%=tableName%>HeaderInfo" value="List" />
+            <text name="Create<%=tableName%>" value="Create<%=tableName%>" />
+            <text name="Edit<%=tableName%>" value="Edit<%=tableName%>" />
+            <text name="Delete<%=tableName%>" value="Delete<%=tableName%>" />
+            <text name="<%=tableName%>DeleteWarningMessage" value="<%=tableName%>DeleteWarningMessage" />
+
+               <% foreach (ColumnSchema column in t.Columns) { %>  
+            <text name="<%=tableName%>_<%=column.Name%>" value="<%=column.Name%>" />
+              <% }%>
+         <!--<%=description%> 结束-->
+                <% }%>
+                
+            
+        }
+
+}
+    
+<script runat="template">
+<!-- #include file="TemplateUtilities.cs" -->
+</script>

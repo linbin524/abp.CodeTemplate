@@ -1,0 +1,77 @@
+﻿<%-- 
+Name:
+Author: 
+Description: 
+--%>
+<%@ Template Language="C#" TargetLanguage="Text" Src="" Inherits=""Debug="False" CompilerVersion="v4.0" %>
+<%@ Assembly Name="SchemaExplorer" %>
+<%@ Import Namespace="SchemaExplorer" %>
+<%@ Property Name="SourceDatabase" DeepLoad="True" Type="SchemaExplorer.DatabaseSchema" %>
+<%@ Property Name="Tables" Type="TableSchemaCollection" Optional="True" Category="2.数据库" Description="Tables to Inclue" %>
+<%@ Template Language="C#" TargetLanguage="Text" %>
+<%@ Property Name="SampleStringProperty" Default="SomeValue" Type="System.String" %>
+<%@ Property Name="SampleBooleanProperty" Default="True" Type="System.Boolean" %>
+<%@ Property Name="RootNamespace" Type="String" Default="HashBlockChain" Optional="False" Category="1.名称空间" Description="系统名称空间的根名称." %>
+<%@ Property Name="Namespace" Type="String" Default="ZLDB_Domain" Optional="False" Category="1.名称空间" Description="系统当前所属文件夹的名称（命名空间相关）." %>
+My static content here.
+My dynamic content here: "<%= SampleStringProperty %>"
+Call a script method: <%= SampleMethod() %>
+<% if (SampleBooleanProperty) { %>
+My conditional content here.
+<% } %>
+<script runat="template">
+// My methods here.
+public string SampleMethod()
+{
+  return "Method output.";
+}
+
+</script>
+using Abp.Application.Navigation;
+using Abp.Localization;
+using <%=RootNamespace%>.Authorization;
+using <%=RootNamespace%>.ZLDB_Domain.Authorization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using <%=RootNamespace%>;
+
+namespace <%=RootNamespace%>.Web.Areas.Mpa.Startup
+{
+    public class CustomsAbpNavigationProvider : NavigationProvider
+    {
+        public override void SetNavigation(INavigationProviderContext context)
+        {
+            
+
+            #region 导航菜单，将它赋值到CustomsAbpNavigationProvider中
+                 
+                 <% foreach(TableSchema t in Tables){ %>
+                 <%string tableName=t.Name.ToString(); %>
+                 <%string paramName=GetParamName(tableName); %>
+                  /*
+                        //<%=t.Description%>    无次级导航属性
+                      var <%=paramName%>=new MenuItemDefinition(
+                              CustomsAppPermissions.<%=tableName%>,
+                               L("<%=tableName%>"),
+                               url:"<%=tableName%>Manage",
+                               icon:"icon-grid",
+                                requiredPermissionName: CustomsAppPermissions.<%=tableName%>
+                               );
+
+               */
+                <% }%>
+           
+            #endregion
+        }
+
+        private static ILocalizableString L(string name)
+        {
+            return new LocalizableString(name, AbpZeroTemplateConsts.LocalizationSourceName);
+        }
+    }
+}
+<script runat="template">
+<!-- #include file="TemplateUtilities.cs" -->
+</script>
